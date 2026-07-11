@@ -1,0 +1,25 @@
+# Node
+node_modules
+
+# Python
+backend/venv
+__pycache__
+
+# Next
+.next
+
+# Environment
+.env
+.env.local
+
+# Python cache
+*.pyc
+
+# Mac
+.DS_Store
+
+# VS Code
+.vscode
+
+# Logs
+*.log
