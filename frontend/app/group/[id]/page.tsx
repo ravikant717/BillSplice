@@ -1,7 +1,7 @@
 "use client";
 import EmptyState from "@/components/common/empty-state";
 import { HandCoins, Receipt, Users, Wallet, ReceiptText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Expense } from "@/types/expense";
 import { getExpenses } from "@/services/expense";
@@ -32,11 +32,7 @@ export default function GroupPage() {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const myBalance =
     balances.find((balance) => balance.user === user?.name)?.balance ?? 0;
-  useEffect(() => {
-    loadGroup();
-  }, []);
-
-  async function loadGroup() {
+  const loadGroup = useCallback(async () => {
     try {
       const data = await getGroupDetails(params.id as string);
       setGroup(data);
@@ -52,7 +48,11 @@ export default function GroupPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [params.id]);
+
+  useEffect(() => {
+    loadGroup();
+  }, [loadGroup]);
 
   if (loading) return <Loading />;
 
@@ -77,6 +77,7 @@ export default function GroupPage() {
     }
   }
   async function handleSettle(toUserId: string, amount: number) {
+    if (!group) return;
     try {
       await settle(group.id, toUserId, amount);
 
@@ -102,7 +103,7 @@ export default function GroupPage() {
 
               <div className="space-y-2">
                 <h1 className="text-4xl font-semibold tracking-tight text-black sm:text-5xl">
-                  {group.name}
+                  {group?.name}
                 </h1>
                 <p className="max-w-2xl text-sm leading-6 text-black/60">
                   Keep track of shared spending, balances, and settlements in
@@ -112,15 +113,15 @@ export default function GroupPage() {
 
               <div className="flex flex-wrap items-center gap-3">
                 <div className="rounded-none border border-black/10 bg-black px-3 py-2 text-xs font-medium tracking-wide text-white">
-                  Invite code: {group.invite_code}
+                  Invite code: {group?.invite_code}
                 </div>
                 <div className="rounded-none border border-black/10 px-3 py-2 text-xs text-black/60">
-                  Members: {group.members.length}
+                  Members: {group?.members.length}
                 </div>
               </div>
             </div>
 
-            <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} />
+            {group ? <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} /> : null}
           </div>
         </section>
 
@@ -132,7 +133,7 @@ export default function GroupPage() {
                   Members
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-black">
-                  {group.members.length}
+                  {group?.members.length}
                 </p>
               </div>
               <Users className="h-5 w-5 text-black" />
@@ -254,7 +255,7 @@ export default function GroupPage() {
 
               <CardContent>
                 <ul className="space-y-3">
-                  {group.members.map((member) => (
+                  {group?.members.map((member) => (
                     <li
                       key={member}
                       className="flex items-center justify-between border border-black/10 p-3"
