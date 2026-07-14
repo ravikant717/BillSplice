@@ -4,6 +4,7 @@ node_modules
 # Python
 backend/venv
 __pycache__
+.venv
 
 # Next
 .next

@@ -1,7 +1,10 @@
+import SessionRedirect from "@/components/auth/session-redirect";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">BillSplice</h1>
-    </main>
+    <SessionRedirect
+      redirectIfAuthedTo="/dashboard"
+      redirectIfUnauthedTo="/login"
+    />
   );
 }
