@@ -14,7 +14,7 @@ app = FastAPI(
 
 app.add_middleware(CORSMiddleware,
     allow_origins=[
-        "https://bill-splice.vercel.app/"
+        "https://bill-splice.vercel.app"
     ], 
     allow_credentials=True, 
     allow_methods=["*"], 
