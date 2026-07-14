@@ -59,9 +59,10 @@ def login(
         key="access_token",
         value=token["access_token"],
         httponly=True,
-        secure=False,      # True in production (HTTPS)
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7,   # 30 minutes
+        secure=True,
+        samesite="none",
+        max_age=60 * 60 * 24 * 7,
+        path="/",
     )
 
     return {
@@ -76,8 +77,10 @@ def me(current_user: User = Depends(get_current_user)):
 def logout(response: Response):
     response.delete_cookie(
         key="access_token",
+        path="/",
         httponly=True,
-        samesite="lax",
+        samesite="none",
+        secure=True
     )
 
     return {
