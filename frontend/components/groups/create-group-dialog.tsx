@@ -51,7 +51,7 @@ export default function CreateGroupDialog({ onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger render={<Button />}>
         <Button>Create Group</Button>
       </DialogTrigger>
 
