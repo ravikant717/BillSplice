@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response 
 from sqlalchemy.orm import Session
 
 from fastapi.security import OAuth2PasswordRequestForm
@@ -15,24 +15,71 @@ router = APIRouter(
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)
-def register(user_data: UserRegister, db: Session = Depends(get_db)):
+def register(
+    response: Response,
+    user_data: UserRegister,
+    db: Session = Depends(get_db),
+):
     user = register_user(user_data, db)
+
+    token = login_user(
+        user_data.email,
+        user_data.password,
+        db,
+    )
+
+    response.set_cookie(
+        key="access_token",
+        value=token["access_token"],
+        httponly=True,
+        secure=False,      # True in production (HTTPS)
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,   # 30 minutes
+    )
+
     return user 
 
 @router.post(
     "/login",
     response_model=Token,
 )
+@router.post("/login")
 def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    return login_user(
+    token = login_user(
         form_data.username,
         form_data.password,
         db,
     )
 
+    response.set_cookie(
+        key="access_token",
+        value=token["access_token"],
+        httponly=True,
+        secure=False,      # True in production (HTTPS)
+        samesite="lax",
+        max_age=60 * 60 * 24 * 7,   # 30 minutes
+    )
+
+    return {
+        "message": "Login successful"
+    }
+
 @router.get("/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)): 
     return current_user
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="lax",
+    )
+
+    return {
+        "message": "Logged out"
+    }
