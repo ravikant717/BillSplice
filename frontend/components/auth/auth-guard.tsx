@@ -17,7 +17,9 @@ export default function AuthGuard({
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
-  const [loading, setLoading] = useState(true);
+  // initialize loading based on whether we already have a user to avoid
+  // calling setState synchronously inside the effect
+  const [loading, setLoading] = useState(() => (user ? false : true));
 
   useEffect(() => {
     async function checkAuth() {
@@ -34,8 +36,6 @@ export default function AuthGuard({
 
     if (!user) {
       checkAuth();
-    } else {
-      setLoading(false);
     }
   }, [user, setUser, router]);
 
