@@ -49,7 +49,7 @@ export default function JoinGroupDialog({ onSuccess }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger render={<Button />}>
         <Button variant="outline">Join Group</Button>
       </DialogTrigger>
 
