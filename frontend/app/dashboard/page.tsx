@@ -81,31 +81,6 @@ export default function Dashboard() {
                   <Users className="h-5 w-5 text-black" />
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-black/45">
-                      {overallBalance >= 0 ? "You are owed" : "You owe"}
-                    </p>
-
-                    <p
-                      className={`mt-2 text-3xl font-semibold ${
-                        overallBalance >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      ₹{Math.abs(overallBalance).toFixed(2)}
-                    </p>
-
-                    <Receipt
-                      className={`h-5 w-5 ${
-                        overallBalance >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                    />
-                  </div>
-                  <Receipt className="h-5 w-5 text-black" />
-                </CardContent>
-              </Card>
             </div>
           </div>
 
