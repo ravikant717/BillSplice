@@ -22,6 +22,8 @@ import Loading from "@/components/common/loading";
 import { settle } from "@/services/settlement";
 import { useAuthStore } from "@/store/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+
 export default function GroupPage() {
   const params = useParams();
   const user = useAuthStore((state) => state.user);
