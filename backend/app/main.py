@@ -7,15 +7,17 @@ from app.api.group import router as group_router
 from app.api.settlement import router as settlement_router
 
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
 app = FastAPI(
     title="BillSplice API",
     version="1.0.0", 
 )
 
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(CORSMiddleware,
     allow_origins=[
-        "https://bill-splice.vercel.app"
+        frontend_url
     ], 
     allow_credentials=True, 
     allow_methods=["*"], 

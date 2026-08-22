@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
@@ -8,11 +9,14 @@ from app.schemas.user import UserRegister, UserResponse, UserLogin, Token
 from app.services.auth_service import register_user, login_user, issue_token_for_user
 from app.db.database import get_db
 
+
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
 
+IS_PRODUCTION = os.getenv("ENVIRONMENT") == "production"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 7  # 7 days
 
 
@@ -21,8 +25,8 @@ def set_auth_cookie(response: Response, access_token: str) -> None:
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,        # True in production (HTTPS). Required when samesite="none".
-        samesite="none",
+        secure=IS_PRODUCTION,        # True in production (HTTPS). Required when samesite="none".
+        samesite="none" if IS_PRODUCTION else "lax",
         max_age=COOKIE_MAX_AGE,
         path="/",
     )
@@ -70,8 +74,8 @@ def logout(response: Response):
         key="access_token",
         path="/",
         httponly=True,
-        samesite="none",
-        secure=True
+        secure=IS_PRODUCTION,
+        samesite="none" if IS_PRODUCTION else "lax"
     )
 
     return {

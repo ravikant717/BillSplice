@@ -17,12 +17,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AddExpenseDialog from "@/components/expense/add-expense-dialog";
 import Navbar from "@/components/layout/navbar";
-import AuthGuard from "@/components/auth/auth-guard";
 import Loading from "@/components/common/loading";
 import { settle } from "@/services/settlement";
 import { useAuthStore } from "@/store/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 
 export default function GroupPage() {
   const params = useParams();
@@ -93,7 +91,7 @@ export default function GroupPage() {
     }
   }
   return (
-    <AuthGuard>
+    <>
       <Navbar />
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-none border border-black/10 bg-white p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.04)] sm:p-8">
@@ -123,7 +121,9 @@ export default function GroupPage() {
               </div>
             </div>
 
-            {group ? <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} /> : null}
+            {group ? (
+              <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} />
+            ) : null}
           </div>
         </section>
 
@@ -372,6 +372,6 @@ export default function GroupPage() {
           </div>
         </section>
       </main>
-    </AuthGuard>
+    </>
   );
 }
