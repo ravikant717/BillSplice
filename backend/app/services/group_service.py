@@ -2,7 +2,7 @@ import random
 import string
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 from app.models.group import Group
 from app.models.group_member import GroupMember
@@ -49,15 +49,11 @@ def get_groups(
 ):
 
     groups = (
-        db.query(Group)
-        .join(
-            GroupMember,
-            Group.id == GroupMember.group_id,
-        )
-        .filter(
-            GroupMember.user_id == current_user.id
-        )
-        .all()
+        db.exec(
+            select(Group)
+            .join(GroupMember, Group.id == GroupMember.group_id)
+            .where(GroupMember.user_id == current_user.id)
+        ).all()
     )
 
     return groups
@@ -81,12 +77,7 @@ def join_group(
         )
 
     existing = (
-        db.query(GroupMember)
-        .filter(
-            GroupMember.group_id == group.id,
-            GroupMember.user_id == current_user.id,
-        )
-        .first()
+        db.exec(select(GroupMember).where(GroupMember.group_id == group.id, GroupMember.user_id == current_user.id)).first
     )
 
     if existing:
@@ -110,21 +101,12 @@ def join_group(
 def get_group_details(group_id, db: Session):
 
     group = (
-        db.query(Group)
-        .filter(Group.id == group_id)
-        .first()
+        db.exec(select(Group).where(Group.id == group_id)).first()
     )
 
     members = (
-        db.query(User)
-        .join(
-            GroupMember,
-            User.id == GroupMember.user_id,
-        )
-        .filter(
-            GroupMember.group_id == group_id
-        )
-        .all()
+        db.exec(select(User).join(GroupMember, User.id == GroupMember.user_id).where(GroupMember.group_id == group_id)).all()
+
     )
 
     return {
@@ -142,12 +124,7 @@ def leave_group(
 ):
 
     member = (
-        db.query(GroupMember)
-        .filter(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == current_user.id,
-        )
-        .first()
+        db.exec(GroupMember).where(GroupMember.group_id == group_id, GroupMember.user_id == current_user.id).first()
     )
 
     if member is None:

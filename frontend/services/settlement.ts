@@ -12,7 +12,7 @@ export async function settle(
   });
 }
 export async function getSettlements(groupId: string) {
-  const response = await api.get(`/expenses/groups/${groupId}/settlements`);
+  const response = await api.get(`/groups/${groupId}/settlements`);
 
   return response.data;
 }

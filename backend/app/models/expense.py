@@ -1,44 +1,42 @@
 import uuid
+from decimal import Decimal
+from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric
-from sqlalchemy.dialects.postgresql import UUID
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, Numeric
 from sqlalchemy.sql import func
 
-from app.db.database import Base
 
-
-class Expense(Base):
+class Expense(SQLModel, table=True):
     __tablename__ = "expenses"
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True
     )
 
-    group_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("groups.id"),
+    group_id: uuid.UUID = Field(
+        foreign_key="groups.id",
         nullable=False
     )
 
-    paid_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
+    paid_by: uuid.UUID = Field(
+        foreign_key="users.id",
         nullable=False
     )
 
-    title = Column(
-        String,
+    title: str = Field(
         nullable=False
     )
 
-    amount = Column(
-        Numeric,
-        nullable=False
+    amount: Decimal = Field(
+        sa_column=Column(Numeric, nullable=False)
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
+    created_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now()
+        )
     )

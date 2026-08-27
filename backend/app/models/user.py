@@ -1,38 +1,42 @@
-import uuid 
+import uuid
+from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime 
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func 
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime
+from sqlalchemy.sql import func
 
-from app.db.database import Base
 
-class User(Base):
-    __tablename__ = "users"   
-    id = Column(
-        UUID(as_uuid=True), 
-        primary_key=True, 
-        default=uuid.uuid4
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True
     )
-    name = Column(
-        String, 
+
+    name: str = Field(
         nullable=False
     )
-    email = Column(
-        String, 
-        unique=True, 
+
+    email: str = Field(
+        unique=True,
         nullable=False,
         index=True
     )
-    
-    password_hash = Column(
-        String, 
+
+    password_hash: str = Field(
         nullable=False
     )
-    avatar_url = Column(
-        String, 
+
+    avatar_url: str | None = Field(
+        default=None,
         nullable=True
     )
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
+
+    created_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now()
+        )
     )

@@ -1,38 +1,37 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime
 from sqlalchemy.sql import func
 
-from app.db.database import Base
 
-
-class Group(Base):
+class Group(SQLModel, table=True):
     __tablename__ = "groups"
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True
     )
 
-    name = Column(
-        String,
+    name: str = Field(
         nullable=False
     )
 
-    invite_code = Column(
-        String, 
-        unique=True, 
-        nullable=False,
-    )
-    created_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
+    invite_code: str = Field(
+        unique=True,
         nullable=False
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
+    created_by: uuid.UUID = Field(
+        foreign_key="users.id",
+        nullable=False
+    )
+
+    created_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now()
+        )
     )

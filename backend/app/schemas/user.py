@@ -1,29 +1,24 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from uuid import UUID
+from pydantic import EmailStr
+from sqlmodel import SQLModel
 
 
-class UserRegister(BaseModel):
+class UserRegister(SQLModel):
     name: str
     email: EmailStr
     password: str
 
-
-class UserLogin(BaseModel):
+class UserLogin(SQLModel):
     email: EmailStr
     password: str
 
-class UserResponse(BaseModel):
+
+class UserResponse(SQLModel):
     id: UUID
     name: str
     email: EmailStr
 
-    model_config = {
-        "from_attributes": True
-    }
 
-
-
-class Token(BaseModel):
+class Token(SQLModel):
     access_token: str
     token_type: str

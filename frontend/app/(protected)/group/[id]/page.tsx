@@ -1,6 +1,6 @@
 "use client";
 import EmptyState from "@/components/common/empty-state";
-import { HandCoins, Receipt, Users, Wallet, ReceiptText } from "lucide-react";
+import { HandCoins, Receipt, Wallet } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Expense } from "@/types/expense";
@@ -30,8 +30,7 @@ export default function GroupPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
-  const myBalance =
-    balances.find((balance) => balance.user === user?.name)?.balance ?? 0;
+
   const loadGroup = useCallback(async () => {
     try {
       const data = await getGroupDetails(params.id as string);
@@ -55,11 +54,6 @@ export default function GroupPage() {
   }, [loadGroup]);
 
   if (loading) return <Loading />;
-
-  const totalExpense = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0,
-  );
 
   async function handleDeleteExpense(expenseId: string) {
     const ok = confirm("Delete this expense?");
@@ -125,66 +119,6 @@ export default function GroupPage() {
               <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} />
             ) : null}
           </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Members
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {group?.members.length}
-                </p>
-              </div>
-              <Users className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Expenses
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {expenses.length}
-                </p>
-              </div>
-              <ReceiptText className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Total spent
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  ₹{totalExpense}
-                </p>
-              </div>
-              <Wallet className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  My Net balance
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {myBalance >= 0
-                    ? `+ ₹${myBalance}`
-                    : `- ₹${Math.abs(myBalance)}`}
-                </p>
-              </div>
-              <HandCoins className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

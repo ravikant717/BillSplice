@@ -4,9 +4,13 @@ from uuid import UUID
 from typing import List 
 from app.schemas.join_group import JoinGroupRequest
 from app.schemas.group_detail import GroupDetailResponse
-from app.api.dependencies import get_current_user
+from app.routes.dependencies import get_current_user
 from app.db.database import get_db
 from app.models.user import User
+from app.schemas.balance import BalanceResponse
+from app.schemas.settlement import SuggestedSettlementResponse
+from app.services.expense_service import calculate_balances, simplify_balances
+
 from app.schemas.group import GroupCreate, GroupResponse
 from app.services.group_service import (
     create_group,
@@ -85,3 +89,30 @@ def leave(
         current_user,
         db,
     )
+    
+@router.get(
+    "/{group_id}/balances",
+    response_model=List[BalanceResponse],
+)
+def balances(
+    group_id,
+    db: Session = Depends(get_db),
+):
+    '''Fills up the balances table'''
+    return calculate_balances(
+        group_id,
+        db,
+    )
+
+@router.get(
+    "/{group_id}/settlements",
+    response_model=list[SuggestedSettlementResponse],
+)
+def settlements(
+    group_id,
+    db: Session = Depends(get_db),
+):
+    return simplify_balances(
+        group_id,
+        db,
+    )   

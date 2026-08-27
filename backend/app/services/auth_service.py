@@ -87,7 +87,7 @@ def login_user(
             detail="Invalid email or password",
         )
 
-    return _issue_token(user)
+    return user
 
 
 def issue_token_for_user(user: User) -> dict:

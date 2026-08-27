@@ -1,16 +1,27 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from sqlalchemy import text 
-from app.api.expense import router as expense_router
-from app.db.database import engine
-from app.api.auth import router as auth_router
-from app.api.group import router as group_router
-from app.api.settlement import router as settlement_router
-
+from app.routes.expense import router as expense_router
+from app.db.database import engine, create_tables
+from app.routes.auth import router as auth_router
+from app.routes.group import router as group_router
+from app.routes.settlement import router as settlement_router
 from fastapi.middleware.cors import CORSMiddleware
 import os
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI): 
+    create_tables()    
+    print("Database tables created")
+    yield
+    # shutdown: cleanup 
+    print("Shutting down the app")
+    
 app = FastAPI(
     title="BillSplice API",
     version="1.0.0", 
+    lifespan=lifespan
 )
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
