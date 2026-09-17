@@ -2,11 +2,20 @@ from PIL import Image
 from fastapi import HTTPException
 from app.db.database import settings
 from app.schemas.receipt import ReceiptData
-from google import genai
-from google.genai import types
 import io
-import cloudinary
-import cloudinary.uploader
+
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
+try:
+    import cloudinary
+    import cloudinary.uploader
+except ImportError:
+    cloudinary = None
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg",
@@ -18,7 +27,7 @@ MAX_IMAGE_DIMENSION = 2048
 
 api_key = (settings.GEMINI_API_KEY or "").strip()
 
-client = genai.Client(api_key=api_key) if api_key else None
+client = genai.Client(api_key=api_key) if (genai and api_key) else None
 
 def validate_image(
     content: bytes,
@@ -96,6 +105,15 @@ def upload_receipt(
     filename: str,
 ) -> dict:
 
+    if not cloudinary:
+        raise HTTPException(
+            status_code=503,
+            detail="Cloudinary package is not installed on the server",
+        )
+
+    if settings.CLOUDINARY_URL:
+        cloudinary.config(cloudinary_url=settings.CLOUDINARY_URL)
+
     result = cloudinary.uploader.upload(
         io.BytesIO(content),
 
@@ -113,6 +131,12 @@ def extract_receipt_data(
     content: bytes,
     content_type: str,
 ) -> ReceiptData:
+
+    if not genai:
+        raise HTTPException(
+            status_code=503,
+            detail="Google GenAI package is not installed on the server",
+        )
 
     if not client:
         raise HTTPException(
