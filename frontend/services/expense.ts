@@ -1,7 +1,12 @@
 import api from "@/lib/axios";
+import { Expense } from "@/types/expense";
+import { PaginatedResponse } from "@/types/pagination";
 
-export async function getExpenses(groupId: string) {
-  const response = await api.get(`/expenses/groups/${groupId}`);
+export async function getExpenses(groupId: string, page = 1, pageSize = 5) {
+  const response = await api.get<PaginatedResponse<Expense>>(
+    `/expenses/groups/${groupId}`,
+    { params: { page, page_size: pageSize } },
+  );
 
   return response.data;
 }

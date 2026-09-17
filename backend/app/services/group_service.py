@@ -3,6 +3,7 @@ import string
 
 from fastapi import HTTPException
 from sqlmodel import Session, select
+from sqlalchemy import func
 
 from app.models.group import Group
 from app.models.group_member import GroupMember
@@ -30,33 +31,44 @@ def create_group(
     )
 
     db.add(group)
-    db.commit()
-    db.refresh(group)
-
+    db.flush()
     member = GroupMember(
         group_id=group.id,
         user_id=current_user.id,
     )
-
     db.add(member)
     db.commit()
+    db.refresh(group)
 
     return group
 
 def get_groups(
     current_user: User,
     db: Session,
+    page: int = 1,
+    page_size: int = 5,
 ):
-
-    groups = (
-        db.exec(
-            select(Group)
-            .join(GroupMember, Group.id == GroupMember.group_id)
-            .where(GroupMember.user_id == current_user.id)
-        ).all()
+    base_query = (
+        select(Group)
+        .join(GroupMember, Group.id == GroupMember.group_id)
+        .where(GroupMember.user_id == current_user.id)
     )
+    total = db.exec(
+        select(func.count()).select_from(base_query.subquery())
+    ).one()
+    groups = db.exec(
+        base_query.order_by(Group.name, Group.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
 
-    return groups
+    return {
+        "items": groups,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": (total + page_size - 1) // page_size,
+    }
 
 def join_group(
     invite_code: str,

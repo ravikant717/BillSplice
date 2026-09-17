@@ -18,6 +18,8 @@ export default function UserProvider({
       try {
         const user = await getCurrentUser();
         setUser(user);
+      } catch {
+        setUser(null);
       } finally {
         setLoading(false);
       }

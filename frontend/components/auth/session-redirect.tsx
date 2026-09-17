@@ -34,8 +34,12 @@ export default function SessionRedirect({
       try {
         const me = await getCurrentUser();
 
-        setUser(me);
-        router.replace(redirectIfAuthedTo);
+        if (me) {
+          setUser(me);
+          router.replace(redirectIfAuthedTo);
+        } else if (redirectIfUnauthedTo) {
+          router.replace(redirectIfUnauthedTo);
+        }
       } catch {
         if (redirectIfUnauthedTo) {
           router.replace(redirectIfUnauthedTo);

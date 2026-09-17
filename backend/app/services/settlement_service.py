@@ -49,7 +49,7 @@ def create_settlement(
     db,
     )
 
-    payer_balance = balances[str(current_user.id)]
+    payer_balance = balances[current_user.id]
 
     if payer_balance >= 0:
         raise HTTPException(

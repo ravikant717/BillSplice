@@ -9,13 +9,15 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     FRONTEND_URL: str
     ENVIRONMENT: str
+    CLOUDINARY_URL: str
+    GEMINI_API_KEY: str
     class Config:
         env_file = ".env"
 
 
 settings = Settings() #Pydantic settings 
 
-engine = create_engine(settings.DATABASE_URL, echo=True) 
+engine = create_engine(settings.DATABASE_URL, echo=False)
 
 def create_tables(): 
     """Create all tables defined by SQLModel class"""

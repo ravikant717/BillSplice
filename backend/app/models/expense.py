@@ -1,7 +1,6 @@
 import uuid
 from decimal import Decimal
 from datetime import datetime
-
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column, DateTime, Numeric
 from sqlalchemy.sql import func
@@ -32,7 +31,7 @@ class Expense(SQLModel, table=True):
     amount: Decimal = Field(
         sa_column=Column(Numeric, nullable=False)
     )
-
+    receipt_url: str | None = None
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(

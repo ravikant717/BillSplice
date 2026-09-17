@@ -21,14 +21,20 @@ export default function LoginPage() {
 
       const user = await getCurrentUser();
 
-      useAuthStore.getState().setUser(user);
+      if (user) {
+        useAuthStore.getState().setUser(user);
+      }
 
       toast.success("Welcome back!");
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Invalid email or password");
+      const axiosError = err as { response?: { data?: { detail?: string } } };
+      const message = axiosError?.response?.data?.detail;
+      toast.error(
+        typeof message === "string" ? message : "Invalid email or password"
+      );
     }
   }
 

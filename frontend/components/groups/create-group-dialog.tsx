@@ -52,7 +52,7 @@ export default function CreateGroupDialog({ onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button />}>
-        <Button>Create Group</Button>
+        Create Group
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">

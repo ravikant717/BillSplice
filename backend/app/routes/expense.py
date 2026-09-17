@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 from typing import List
 from uuid import UUID
@@ -8,6 +8,7 @@ from app.models.user import User
 from app.routes.dependencies import get_current_user
 from app.schemas.expense import ExpenseCreate, ExpenseResponse
 from app.schemas.balance import OverallBalanceResponse
+from app.schemas.pagination import PaginatedResponse
 from app.services.expense_service import create_expense, get_overall_balance, get_group_expenses, delete_expense
 
 router = APIRouter(
@@ -32,22 +33,27 @@ def add_expense(
         expense.group_id,
         expense.title,
         expense.amount,
+        expense.receipt_url, 
         current_user,
         db,
     )
     
 @router.get(
     "/groups/{group_id}",
-    response_model=list[ExpenseResponse],
+    response_model=PaginatedResponse[ExpenseResponse],
 )
 def history(
     group_id: UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(5, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     '''Get the list of all expenses'''
     return get_group_expenses(
         group_id,
         db,
+        page,
+        page_size,
     )
     
 @router.delete("/{expense_id}")

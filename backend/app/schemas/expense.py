@@ -6,6 +6,8 @@ class ExpenseCreate(SQLModel):
     group_id: UUID
     title: str
     amount: Decimal
+    receipt_url: str | None = None 
+    
 
 
 class ExpenseResponse(SQLModel):
@@ -13,6 +15,8 @@ class ExpenseResponse(SQLModel):
     title: str
     amount: Decimal
     paid_by: UUID
+    receipt_url: str | None = None 
+    
 
     model_config = {
         "from_attributes": True

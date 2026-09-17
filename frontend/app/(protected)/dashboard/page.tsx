@@ -1,7 +1,7 @@
 "use client";
 import { Users, Sparkles, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CreateGroupDialog from "@/components/groups/create-group-dialog";
 import { getGroups } from "@/services/group";
 import { Group } from "@/types/group";
@@ -11,27 +11,34 @@ import GroupCard from "@/components/groups/group-card";
 import Navbar from "@/components/layout/navbar";
 import EmptyState from "@/components/common/empty-state";
 import GroupCardSkeleton from "@/components/groups/group-card-skeleton";
+import { Button } from "@/components/ui/button";
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsPage, setGroupsPage] = useState(1);
+  const [groupsPages, setGroupsPages] = useState(0);
+  const [groupsTotal, setGroupsTotal] = useState(0);
 
   const hour = new Date().getHours();
 
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  useEffect(() => {
-    loadGroups();
-  }, []);
-  async function loadGroups() {
+  const loadGroups = useCallback(async () => {
     try {
-      const data = await getGroups();
-      setGroups(data);
+      const data = await getGroups(groupsPage);
+      setGroups(data.items);
+      setGroupsPages(data.pages);
+      setGroupsTotal(data.total);
     } finally {
       setGroupsLoading(false);
     }
-  }
+  }, [groupsPage]);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
 
   return (
     <>
@@ -65,7 +72,7 @@ export default function Dashboard() {
                     <span className="inline-block h-4 w-16 animate-pulse bg-black/10" />
                   ) : (
                     <>
-                      {groups.length} group{groups.length === 1 ? "" : "s"}{" "}
+                      {groupsTotal} group{groupsTotal === 1 ? "" : "s"}{" "}
                       tracked
                     </>
                   )}{" "}
@@ -84,7 +91,7 @@ export default function Dashboard() {
                       {groupsLoading ? (
                         <span className="inline-block h-4 w-16 animate-pulse bg-black/10" />
                       ) : (
-                        <>{groups.length}</>
+                        <>{groupsTotal}</>
                       )}{" "}
                     </p>
                   </div>
@@ -140,34 +147,29 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>At a glance</CardTitle>
-              <p className="mt-1 text-xs text-black/50">
-                A simple snapshot of where things stand.
-              </p>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Groups</span>
-                <span className="font-semibold text-black">
-                  {groups.length}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Ready to split</span>
-                <span className="font-semibold text-black">Yes</span>
-              </div>
-
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Theme</span>
-                <span className="font-semibold text-black">Mono</span>
-              </div>
+              {!groupsLoading && groupsPages > 1 && (
+                <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={groupsPage === 1}
+                    onClick={() => setGroupsPage((page) => page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs text-black/50">
+                    Page {groupsPage} of {groupsPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={groupsPage === groupsPages}
+                    onClick={() => setGroupsPage((page) => page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>

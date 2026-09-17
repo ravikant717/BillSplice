@@ -22,14 +22,20 @@ export default function SignUpPage() {
 
       const user = await getCurrentUser();
 
-      useAuthStore.getState().setUser(user);
+      if (user) {
+        useAuthStore.getState().setUser(user);
+      }
 
       toast.success("Welcome aboard!");
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Could not create account");
+      const axiosError = err as { response?: { data?: { detail?: string } } };
+      const message = axiosError?.response?.data?.detail;
+      toast.error(
+        typeof message === "string" ? message : "Could not create account"
+      );
     }
   }
 

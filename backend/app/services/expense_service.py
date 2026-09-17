@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlmodel import Session, select, delete
+from sqlalchemy import func
 from collections import defaultdict
 from uuid import UUID
 from decimal import Decimal, ROUND_HALF_UP
@@ -17,6 +18,7 @@ def create_expense(
     group_id: UUID,
     title: str,
     amount: Decimal,
+    receipt_url: str | None,
     current_user: User,
     db: Session,
 ):
@@ -49,11 +51,10 @@ def create_expense(
         paid_by=current_user.id,
         title=title,
         amount=amount,
+        receipt_url=receipt_url
     )
 
     db.add(expense)
-    db.commit()
-    db.refresh(expense)
 
     # Split evenly, rounded to cents. Any leftover cents from rounding
     # is assigned to the last split so all splits always sum to `amount`.
@@ -77,13 +78,34 @@ def create_expense(
         db.add(split)
 
     db.commit()
+    db.refresh(expense)
 
     return expense
 
 #Gets the group expense history
-def get_group_expenses(group_id, db: Session):
-    statement = select(Expense).where(Expense.group_id == group_id).order_by(Expense.created_at.desc())
-    return db.exec(statement).all()
+def get_group_expenses(
+    group_id,
+    db: Session,
+    page: int = 1,
+    page_size: int = 5,
+):
+    base_query = select(Expense).where(Expense.group_id == group_id)
+    total = db.exec(
+        select(func.count()).select_from(base_query.subquery())
+    ).one()
+    items = db.exec(
+        base_query.order_by(Expense.created_at.desc(), Expense.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": (total + page_size - 1) // page_size,
+    }
 
 
 def delete_expense(
@@ -136,11 +158,11 @@ def get_balance_map(
     
     #Add what each person paid
     for expense in expenses:
-        balances[str(expense.paid_by)] += Decimal(expense.amount)
+        balances[expense.paid_by] += Decimal(expense.amount)
 
     #Subtract what each person owes
     for split in splits: 
-        balances[str(split.user_id)] -= Decimal(split.amount)
+        balances[split.user_id] -= Decimal(split.amount)
         
     settlements = db.exec(
         select(Settlement).where(
@@ -149,9 +171,9 @@ def get_balance_map(
     ).all()
     
     for settlement in settlements: 
-        balances[str(settlement.from_user_id)] += Decimal(settlement.amount)
+        balances[settlement.from_user_id] += Decimal(settlement.amount)
         
-        balances[str(settlement.to_user_id)] -= Decimal(settlement.amount)
+        balances[settlement.to_user_id] -= Decimal(settlement.amount)
 
     #if balance(a) > balance(b) it means that a will get more money than b, or a will pay less money than b
     return balances
@@ -167,14 +189,14 @@ def calculate_balances(
     users = db.exec(select(User).where(User.id.in_(user_ids))).all()
     
     user_map = {
-        str(user.id): user 
+        user.id: user
         for user in users
     }
     
     result = []
 
     for user_id, balance in balances.items():
-        user = user_map.get(str(user_id))
+        user = user_map.get(user_id)
 
         if user is None:
             continue  # user no longer exists; skip rather than crash
@@ -258,15 +280,15 @@ def simplify_balances(group_id, db: Session):
     users = db.exec(statement).all()
     
     user_map = {
-        str(user.id): user 
+        user.id: user
         for user in users
     }
     
     result = []
     
     for settlement in settlements: 
-        from_user = user_map.get(str(settlement["from_user_id"]))
-        to_user = user_map.get(str(settlement["to_user_id"]))
+        from_user = user_map.get(settlement["from_user_id"])
+        to_user = user_map.get(settlement["to_user_id"])
 
         if from_user is None or to_user is None: 
             continue 

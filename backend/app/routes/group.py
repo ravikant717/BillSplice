@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List 
@@ -12,6 +12,7 @@ from app.schemas.settlement import SuggestedSettlementResponse
 from app.services.expense_service import calculate_balances, simplify_balances
 
 from app.schemas.group import GroupCreate, GroupResponse
+from app.schemas.pagination import PaginatedResponse
 from app.services.group_service import (
     create_group,
     get_groups,
@@ -54,15 +55,19 @@ def get_group_detail(
 
 @router.get(
     "",
-    response_model=List[GroupResponse],
+    response_model=PaginatedResponse[GroupResponse],
 )
 def list_groups(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(5, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     return get_groups(
         current_user,
         db,
+        page,
+        page_size,
     )
     
 @router.post("/join")
@@ -95,7 +100,7 @@ def leave(
     response_model=List[BalanceResponse],
 )
 def balances(
-    group_id,
+    group_id: UUID,
     db: Session = Depends(get_db),
 ):
     '''Fills up the balances table'''
@@ -109,7 +114,7 @@ def balances(
     response_model=list[SuggestedSettlementResponse],
 )
 def settlements(
-    group_id,
+    group_id: UUID,
     db: Session = Depends(get_db),
 ):
     return simplify_balances(

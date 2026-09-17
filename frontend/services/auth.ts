@@ -4,6 +4,7 @@ export async function login(email: string, password: string) {
   const body = new URLSearchParams();
 
   body.append("username", email);
+  body.append("email", email);
   body.append("password", password);
 
   const response = await api.post(
@@ -34,7 +35,14 @@ export async function register(data: {
 }
 
 export async function getCurrentUser() {
-  const response = await api.get("/auth/me");
+  const response = await api.get("/auth/me", {
+    validateStatus: (status) =>
+      (status >= 200 && status < 300) || status === 401,
+  });
+
+  if (response.status === 401) {
+    return null;
+  }
 
   return response.data;
 }

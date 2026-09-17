@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Request, HTTPException
 from sqlmodel import Session
 
 from app.db.database import get_db, settings
@@ -23,7 +23,7 @@ def set_auth_cookie(response: Response, access_token: str) -> None:
         path="/", 
         expires=COOKIE_MAX_AGE, 
         httponly=True,
-        secure=IS_PRODUCTION,        # True in production (HTTPS). Required when samesite="none".
+        secure=IS_PRODUCTION,
         samesite="none" if IS_PRODUCTION else "lax",
     )
 
@@ -42,14 +42,34 @@ def register(
     return user
 
 @router.post("/login")
-def login(
+async def login(
+    request: Request,
     response: Response,
-    user_data: UserLogin, 
     db: Session = Depends(get_db),
 ):
+    content_type = request.headers.get("content-type", "")
+    if "application/x-www-form-urlencoded" in content_type:
+        form = await request.form()
+        email = form.get("username") or form.get("email")
+        password = form.get("password")
+    else:
+        try:
+            body = await request.json()
+            email = body.get("email") or body.get("username")
+            password = body.get("password")
+        except Exception:
+            email = None
+            password = None
+
+    if not email or not password:
+        raise HTTPException(
+            status_code=422,
+            detail="Both email and password are required",
+        )
+
     user = login_user(
-        user_data.email,
-        user_data.password,
+        str(email),
+        str(password),
         db,
     )
 

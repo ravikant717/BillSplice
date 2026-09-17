@@ -62,7 +62,7 @@ export default function AddExpenseDialog({ groupId, onSuccess }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button />}>
-        <Button>Add Expense</Button>
+        Add Expense
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">

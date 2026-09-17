@@ -28,26 +28,33 @@ export default function GroupPage() {
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expensesPage, setExpensesPage] = useState(1);
+  const [expensesPages, setExpensesPages] = useState(0);
+  const [expensesTotal, setExpensesTotal] = useState(0);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
 
   const loadGroup = useCallback(async () => {
     try {
-      const data = await getGroupDetails(params.id as string);
+      const groupId = params.id as string;
+      const [data, expenseData, balanceData, settlementData] =
+        await Promise.all([
+          getGroupDetails(groupId),
+          getExpenses(groupId, expensesPage),
+          getBalances(groupId),
+          getSettlements(groupId),
+        ]);
+
       setGroup(data);
-
-      const expenseData = await getExpenses(params.id as string);
-      setExpenses(expenseData);
-
-      const balanceData = await getBalances(params.id as string);
+      setExpenses(expenseData.items);
+      setExpensesPages(expenseData.pages);
+      setExpensesTotal(expenseData.total);
       setBalances(balanceData);
-
-      const settlementData = await getSettlements(params.id as string);
       setSettlements(settlementData);
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, expensesPage]);
 
   useEffect(() => {
     loadGroup();
@@ -131,7 +138,7 @@ export default function GroupPage() {
                 </p>
               </div>
               <span className="rounded-none border border-black/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-black/50">
-                {expenses.length} items
+                {expensesTotal} items
               </span>
             </CardHeader>
 
@@ -175,6 +182,29 @@ export default function GroupPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {!loading && expensesPages > 1 && (
+                <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={expensesPage === 1}
+                    onClick={() => setExpensesPage((page) => page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs text-black/50">
+                    Page {expensesPage} of {expensesPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={expensesPage === expensesPages}
+                    onClick={() => setExpensesPage((page) => page + 1)}
+                  >
+                    Next
+                  </Button>
                 </div>
               )}
             </CardContent>
