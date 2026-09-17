@@ -6,6 +6,7 @@ bcrypt==4.0.1
 certifi==2026.6.17
 cffi==2.1.0
 click==8.4.2
+cloudinary==1.46.2
 colorama==0.4.6
 cryptography==49.0.0
 detect-installer==0.1.0
@@ -16,6 +17,7 @@ fastapi==0.139.0
 fastapi-cli==0.0.29
 fastapi-cloud-cli==0.22.2
 fastar==0.11.0
+google-genai==2.20.0
 greenlet==3.5.3
 h11==0.16.0
 httpcore==1.0.9
