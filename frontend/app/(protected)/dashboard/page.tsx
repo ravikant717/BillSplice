@@ -28,9 +28,12 @@ export default function Dashboard() {
   const loadGroups = useCallback(async () => {
     try {
       const data = await getGroups(groupsPage);
-      setGroups(data.items);
-      setGroupsPages(data.pages);
-      setGroupsTotal(data.total);
+      setGroups(data?.items ?? []);
+      setGroupsPages(data?.pages ?? 0);
+      setGroupsTotal(data?.total ?? 0);
+    } catch (err) {
+      console.error("Failed to load groups:", err);
+      setGroups([]);
     } finally {
       setGroupsLoading(false);
     }
@@ -134,7 +137,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   <GroupCardSkeleton />
                 </div>
-              ) : groups.length === 0 ? (
+              ) : (groups?.length ?? 0) === 0 ? (
                 <EmptyState
                   icon={<ArrowRight />}
                   title="No groups yet"
@@ -142,7 +145,7 @@ export default function Dashboard() {
                 />
               ) : (
                 <div className="space-y-4">
-                  {groups.map((group) => (
+                  {groups?.map((group) => (
                     <GroupCard key={group.id} group={group} />
                   ))}
                 </div>

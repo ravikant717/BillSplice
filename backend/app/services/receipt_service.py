@@ -1,4 +1,5 @@
 from PIL import Image
+from fastapi import HTTPException
 from app.db.database import settings
 from app.schemas.receipt import ReceiptData
 from google import genai
@@ -15,14 +16,9 @@ ALLOWED_IMAGE_TYPES = {
 MAX_FILE_SIZE_MB = 15
 MAX_IMAGE_DIMENSION = 2048
 
-api_key = settings.GEMINI_API_KEY.strip()
+api_key = (settings.GEMINI_API_KEY or "").strip()
 
-print("RECEIPT SERVICE KEY EXISTS:", bool(api_key))
-print("RECEIPT SERVICE KEY LENGTH:", len(api_key))
-
-client = genai.Client(
-    api_key=api_key
-)
+client = genai.Client(api_key=api_key) if api_key else None
 
 def validate_image(
     content: bytes,
@@ -117,6 +113,12 @@ def extract_receipt_data(
     content: bytes,
     content_type: str,
 ) -> ReceiptData:
+
+    if not client:
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini API key is not configured on the server",
+        )
 
     prompt = """
 Extract the information from this receipt.
