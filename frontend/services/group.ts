@@ -2,11 +2,27 @@ import api from "@/lib/axios";
 import { Group } from "@/types/group";
 import { PaginatedResponse } from "@/types/pagination";
 
-export async function getGroups(page = 1, pageSize = 5) {
-  const response = await api.get<PaginatedResponse<Group>>("/groups", {
+export async function getGroups(page = 1, pageSize = 5): Promise<PaginatedResponse<Group>> {
+  const response = await api.get<PaginatedResponse<Group> | Group[]>("/groups", {
     params: { page, page_size: pageSize },
   });
-  return response.data;
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      total: data.length,
+      page: 1,
+      page_size: data.length,
+      pages: 1,
+    };
+  }
+  return {
+    items: data?.items ?? [],
+    total: data?.total ?? (data?.items ? data.items.length : 0),
+    page: data?.page ?? page,
+    page_size: data?.page_size ?? pageSize,
+    pages: data?.pages ?? 1,
+  };
 }
 
 export async function createGroup(name: string) {

@@ -46,11 +46,13 @@ export default function GroupPage() {
         ]);
 
       setGroup(data);
-      setExpenses(expenseData.items);
-      setExpensesPages(expenseData.pages);
-      setExpensesTotal(expenseData.total);
-      setBalances(balanceData);
-      setSettlements(settlementData);
+      setExpenses(expenseData?.items ?? []);
+      setExpensesPages(expenseData?.pages ?? 0);
+      setExpensesTotal(expenseData?.total ?? 0);
+      setBalances(Array.isArray(balanceData) ? balanceData : []);
+      setSettlements(Array.isArray(settlementData) ? settlementData : []);
+    } catch (err) {
+      console.error("Failed to load group data:", err);
     } finally {
       setLoading(false);
     }
@@ -117,7 +119,7 @@ export default function GroupPage() {
                   Invite code: {group?.invite_code}
                 </div>
                 <div className="rounded-none border border-black/10 px-3 py-2 text-xs text-black/60">
-                  Members: {group?.members.length}
+                  Members: {group?.members?.length ?? 0}
                 </div>
               </div>
             </div>
@@ -143,7 +145,7 @@ export default function GroupPage() {
             </CardHeader>
 
             <CardContent>
-              {expenses.length === 0 ? (
+              {(expenses?.length ?? 0) === 0 ? (
                 <EmptyState
                   icon={<Receipt />}
                   title="No expenses yet"
@@ -245,7 +247,7 @@ export default function GroupPage() {
               </CardHeader>
 
               <CardContent>
-                {balances.length === 0 ? (
+                {(balances?.length ?? 0) === 0 ? (
                   <EmptyState
                     icon={<Wallet />}
                     title="No balances"
@@ -253,7 +255,7 @@ export default function GroupPage() {
                   />
                 ) : (
                   <div className="space-y-3">
-                    {balances.map((balance) => (
+                    {balances?.map((balance) => (
                       <div
                         key={balance.user}
                         className="flex items-center justify-between border border-black/10 p-4"
@@ -283,7 +285,7 @@ export default function GroupPage() {
               </CardHeader>
 
               <CardContent>
-                {settlements.length === 0 ? (
+                {(settlements?.length ?? 0) === 0 ? (
                   <EmptyState
                     icon={<HandCoins />}
                     title="No settlements"

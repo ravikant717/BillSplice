@@ -7,12 +7,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALGORITHM: str = "HS256"
-    FRONTEND_URL: str
-    ENVIRONMENT: str
-    CLOUDINARY_URL: str
-    GEMINI_API_KEY: str
+    FRONTEND_URL: str = "https://bill-splice.vercel.app"
+    ENVIRONMENT: str = "production"
+    CLOUDINARY_URL: str = ""
+    GEMINI_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings() #Pydantic settings 
