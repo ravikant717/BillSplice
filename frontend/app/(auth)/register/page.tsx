@@ -4,31 +4,38 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import SessionRedirect from "@/components/auth/session-redirect";
-import { login, getCurrentUser } from "@/services/auth";
+import { register, getCurrentUser } from "@/services/auth";
 import { useAuthStore } from "@/store/auth";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
 
-  async function handleLogin() {
+  async function handleRegister() {
     try {
-      await login(email, password);
+      await register({ name, email, password });
 
       const user = await getCurrentUser();
 
-      useAuthStore.getState().setUser(user);
+      if (user) {
+        useAuthStore.getState().setUser(user);
+      }
 
-      toast.success("Welcome back!");
+      toast.success("Welcome aboard!");
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Invalid email or password");
+      const axiosError = err as { response?: { data?: { detail?: string } } };
+      const message = axiosError?.response?.data?.detail;
+      toast.error(
+        typeof message === "string" ? message : "Could not create account"
+      );
     }
   }
 
@@ -36,6 +43,12 @@ export default function LoginPage() {
     <SessionRedirect redirectIfAuthedTo="/dashboard">
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-80 space-y-4">
+          <input
+            className="w-full border p-2"
+            placeholder="Name"
+            onChange={(e) => setName(e.target.value)}
+          />
+
           <input
             className="w-full border p-2"
             placeholder="Email"
@@ -50,10 +63,10 @@ export default function LoginPage() {
           />
 
           <button
-            onClick={handleLogin}
+            onClick={handleRegister}
             className="w-full rounded bg-black p-2 text-white"
           >
-            Login
+            Register
           </button>
         </div>
       </div>

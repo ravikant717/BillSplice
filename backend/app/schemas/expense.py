@@ -1,19 +1,22 @@
 from uuid import UUID
+from sqlmodel import SQLModel
+from decimal import Decimal 
 
-from pydantic import BaseModel
-
-
-class ExpenseCreate(BaseModel):
+class ExpenseCreate(SQLModel):
     group_id: UUID
     title: str
-    amount: float
+    amount: Decimal
+    receipt_url: str | None = None 
+    
 
 
-class ExpenseResponse(BaseModel):
+class ExpenseResponse(SQLModel):
     id: UUID
     title: str
-    amount: float
+    amount: Decimal
     paid_by: UUID
+    receipt_url: str | None = None 
+    
 
     model_config = {
         "from_attributes": True

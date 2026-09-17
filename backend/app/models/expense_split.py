@@ -1,33 +1,29 @@
+# app/models/expense_split.py
+
 import uuid
+from decimal import Decimal
 
-from sqlalchemy import Column, ForeignKey, Numeric
-from sqlalchemy.dialects.postgresql import UUID
-
-from app.db.database import Base
+from sqlmodel import SQLModel, Field
 
 
-class ExpenseSplit(Base):
+class ExpenseSplit(SQLModel, table=True):
     __tablename__ = "expense_splits"
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True
     )
 
-    expense_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("expenses.id"),
+    expense_id: uuid.UUID = Field(
+        foreign_key="expenses.id",
         nullable=False
     )
 
-    user_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
+    user_id: uuid.UUID = Field(
+        foreign_key="users.id",
         nullable=False
     )
 
-    amount = Column(
-        Numeric,
+    amount: Decimal = Field(
         nullable=False
     )

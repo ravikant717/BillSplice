@@ -1,44 +1,43 @@
-from sqlalchemy import Column, ForeignKey, Float, DateTime
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
 import uuid
+from datetime import datetime
+from decimal import Decimal
 
-from app.db.database import Base
+from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime, Numeric
+from sqlalchemy.sql import func
 
 
-class Settlement(Base):
+class Settlement(SQLModel, table=True):
     __tablename__ = "settlements"
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True
     )
 
-    group_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("groups.id"),
-        nullable=False,
+    group_id: uuid.UUID = Field(
+        foreign_key="groups.id",
+        nullable=False
     )
 
-    from_user_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False,
+    from_user_id: uuid.UUID = Field(
+        foreign_key="users.id",
+        nullable=False
     )
 
-    to_user_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False,
+    to_user_id: uuid.UUID = Field(
+        foreign_key="users.id",
+        nullable=False
     )
 
-    amount = Column(
-        Float,
-        nullable=False,
+    amount: Decimal = Field(
+        sa_column=Column(Numeric, nullable=False)
     )
 
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
+    created_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now()
+        )
     )

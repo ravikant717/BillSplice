@@ -1,5 +1,4 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlmodel import SQLModel, Session, create_engine 
 from pydantic_settings import BaseSettings
 
 
@@ -8,30 +7,23 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALGORITHM: str = "HS256"
-
+    FRONTEND_URL: str
+    ENVIRONMENT: str
+    CLOUDINARY_URL: str
+    GEMINI_API_KEY: str
     class Config:
         env_file = ".env"
 
 
 settings = Settings() #Pydantic settings 
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_pre_ping=True,
-)
+engine = create_engine(settings.DATABASE_URL, echo=False)
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
-
-Base = declarative_base()
-
+def create_tables(): 
+    """Create all tables defined by SQLModel class"""
+    SQLModel.metadata.create_all(engine)
 
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    """Dependency that provides a database session per request"""
+    with Session(engine) as session: 
+        yield session

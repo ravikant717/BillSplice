@@ -1,6 +1,6 @@
 "use client";
 import EmptyState from "@/components/common/empty-state";
-import { HandCoins, Receipt, Users, Wallet, ReceiptText } from "lucide-react";
+import { HandCoins, Receipt, Wallet } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Expense } from "@/types/expense";
@@ -17,12 +17,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AddExpenseDialog from "@/components/expense/add-expense-dialog";
 import Navbar from "@/components/layout/navbar";
-import AuthGuard from "@/components/auth/auth-guard";
 import Loading from "@/components/common/loading";
 import { settle } from "@/services/settlement";
 import { useAuthStore } from "@/store/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 
 export default function GroupPage() {
   const params = useParams();
@@ -30,38 +28,39 @@ export default function GroupPage() {
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expensesPage, setExpensesPage] = useState(1);
+  const [expensesPages, setExpensesPages] = useState(0);
+  const [expensesTotal, setExpensesTotal] = useState(0);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
-  const myBalance =
-    balances.find((balance) => balance.user === user?.name)?.balance ?? 0;
+
   const loadGroup = useCallback(async () => {
     try {
-      const data = await getGroupDetails(params.id as string);
+      const groupId = params.id as string;
+      const [data, expenseData, balanceData, settlementData] =
+        await Promise.all([
+          getGroupDetails(groupId),
+          getExpenses(groupId, expensesPage),
+          getBalances(groupId),
+          getSettlements(groupId),
+        ]);
+
       setGroup(data);
-
-      const expenseData = await getExpenses(params.id as string);
-      setExpenses(expenseData);
-
-      const balanceData = await getBalances(params.id as string);
+      setExpenses(expenseData.items);
+      setExpensesPages(expenseData.pages);
+      setExpensesTotal(expenseData.total);
       setBalances(balanceData);
-
-      const settlementData = await getSettlements(params.id as string);
       setSettlements(settlementData);
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, expensesPage]);
 
   useEffect(() => {
     loadGroup();
   }, [loadGroup]);
 
   if (loading) return <Loading />;
-
-  const totalExpense = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0,
-  );
 
   async function handleDeleteExpense(expenseId: string) {
     const ok = confirm("Delete this expense?");
@@ -93,7 +92,7 @@ export default function GroupPage() {
     }
   }
   return (
-    <AuthGuard>
+    <>
       <Navbar />
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-none border border-black/10 bg-white p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.04)] sm:p-8">
@@ -123,68 +122,10 @@ export default function GroupPage() {
               </div>
             </div>
 
-            {group ? <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} /> : null}
+            {group ? (
+              <AddExpenseDialog groupId={group.id} onSuccess={loadGroup} />
+            ) : null}
           </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Members
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {group?.members.length}
-                </p>
-              </div>
-              <Users className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Expenses
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {expenses.length}
-                </p>
-              </div>
-              <ReceiptText className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  Total spent
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  ₹{totalExpense}
-                </p>
-              </div>
-              <Wallet className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/50">
-                  My Net balance
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-black">
-                  {myBalance >= 0
-                    ? `+ ₹${myBalance}`
-                    : `- ₹${Math.abs(myBalance)}`}
-                </p>
-              </div>
-              <HandCoins className="h-5 w-5 text-black" />
-            </CardContent>
-          </Card>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -197,7 +138,7 @@ export default function GroupPage() {
                 </p>
               </div>
               <span className="rounded-none border border-black/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-black/50">
-                {expenses.length} items
+                {expensesTotal} items
               </span>
             </CardHeader>
 
@@ -241,6 +182,29 @@ export default function GroupPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {!loading && expensesPages > 1 && (
+                <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={expensesPage === 1}
+                    onClick={() => setExpensesPage((page) => page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs text-black/50">
+                    Page {expensesPage} of {expensesPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={expensesPage === expensesPages}
+                    onClick={() => setExpensesPage((page) => page + 1)}
+                  >
+                    Next
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -372,6 +336,6 @@ export default function GroupPage() {
           </div>
         </section>
       </main>
-    </AuthGuard>
+    </>
   );
 }

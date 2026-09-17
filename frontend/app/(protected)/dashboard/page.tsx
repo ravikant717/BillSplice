@@ -1,7 +1,7 @@
 "use client";
-import { Users, Receipt, Sparkles, ArrowRight } from "lucide-react";
+import { Users, Sparkles, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CreateGroupDialog from "@/components/groups/create-group-dialog";
 import { getGroups } from "@/services/group";
 import { Group } from "@/types/group";
@@ -9,33 +9,39 @@ import { useAuthStore } from "@/store/auth";
 import JoinGroupDialog from "@/components/groups/join-group-dialog";
 import GroupCard from "@/components/groups/group-card";
 import Navbar from "@/components/layout/navbar";
-import AuthGuard from "@/components/auth/auth-guard";
 import EmptyState from "@/components/common/empty-state";
+import GroupCardSkeleton from "@/components/groups/group-card-skeleton";
 import { Button } from "@/components/ui/button";
-import { getOverallBalance } from "@/services/dashboard";
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
-  const [overallBalance, setOverallBalance] = useState(0);
+
   const [groups, setGroups] = useState<Group[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [groupsPage, setGroupsPage] = useState(1);
+  const [groupsPages, setGroupsPages] = useState(0);
+  const [groupsTotal, setGroupsTotal] = useState(0);
+
   const hour = new Date().getHours();
 
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const loadGroups = useCallback(async () => {
+    try {
+      const data = await getGroups(groupsPage);
+      setGroups(data.items);
+      setGroupsPages(data.pages);
+      setGroupsTotal(data.total);
+    } finally {
+      setGroupsLoading(false);
+    }
+  }, [groupsPage]);
+
   useEffect(() => {
     loadGroups();
-  }, []);
-  async function loadGroups() {
-    const data = await getGroups();
-
-    setGroups(data);
-
-    const balance = await getOverallBalance();
-
-    setOverallBalance(balance);
-  }
+  }, [loadGroups]);
 
   return (
-    <AuthGuard>
+    <>
       <Navbar />
       <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="rounded-none border border-black/10 bg-white p-6 shadow-[0_1px_0_0_rgba(0,0,0,0.04)] sm:p-8">
@@ -62,7 +68,14 @@ export default function Dashboard() {
                   Split expenses cleanly
                 </span>
                 <span className="rounded-none border border-black/10 px-3 py-2">
-                  {groups.length} group{groups.length === 1 ? "" : "s"} tracked
+                  {groupsLoading ? (
+                    <span className="inline-block h-4 w-16 animate-pulse bg-black/10" />
+                  ) : (
+                    <>
+                      {groupsTotal} group{groupsTotal === 1 ? "" : "s"}{" "}
+                      tracked
+                    </>
+                  )}{" "}
                 </span>
               </div>
             </div>
@@ -75,35 +88,14 @@ export default function Dashboard() {
                       Total groups
                     </p>
                     <p className="mt-2 text-3xl font-semibold text-black">
-                      {groups.length}
+                      {groupsLoading ? (
+                        <span className="inline-block h-4 w-16 animate-pulse bg-black/10" />
+                      ) : (
+                        <>{groupsTotal}</>
+                      )}{" "}
                     </p>
                   </div>
                   <Users className="h-5 w-5 text-black" />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-black/45">
-                      {overallBalance >= 0 ? "You are owed" : "You owe"}
-                    </p>
-
-                    <p
-                      className={`mt-2 text-3xl font-semibold ${
-                        overallBalance >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      ₹{Math.abs(overallBalance).toFixed(2)}
-                    </p>
-
-                    <Receipt
-                      className={`h-5 w-5 ${
-                        overallBalance >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                    />
-                  </div>
-                  <Receipt className="h-5 w-5 text-black" />
                 </CardContent>
               </Card>
             </div>
@@ -135,14 +127,14 @@ export default function Dashboard() {
                   Open a group to review expenses, balances, and settlements.
                 </p>
               </div>
-
-              <span className="rounded-none border border-black/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-black/50">
-                {groups.length} total
-              </span>
             </CardHeader>
 
             <CardContent>
-              {groups.length === 0 ? (
+              {groupsLoading ? (
+                <div className="space-y-4">
+                  <GroupCardSkeleton />
+                </div>
+              ) : groups.length === 0 ? (
                 <EmptyState
                   icon={<ArrowRight />}
                   title="No groups yet"
@@ -155,38 +147,33 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>At a glance</CardTitle>
-              <p className="mt-1 text-xs text-black/50">
-                A simple snapshot of where things stand.
-              </p>
-            </CardHeader>
-
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Groups</span>
-                <span className="font-semibold text-black">
-                  {groups.length}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Ready to split</span>
-                <span className="font-semibold text-black">Yes</span>
-              </div>
-
-              <div className="flex items-center justify-between border border-black/10 p-3">
-                <span className="text-sm text-black/60">Theme</span>
-                <span className="font-semibold text-black">Mono</span>
-              </div>
+              {!groupsLoading && groupsPages > 1 && (
+                <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={groupsPage === 1}
+                    onClick={() => setGroupsPage((page) => page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-xs text-black/50">
+                    Page {groupsPage} of {groupsPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={groupsPage === groupsPages}
+                    onClick={() => setGroupsPage((page) => page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>
       </main>
-    </AuthGuard>
+    </>
   );
 }

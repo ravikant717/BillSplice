@@ -1,7 +1,11 @@
 import api from "@/lib/axios";
+import { Group } from "@/types/group";
+import { PaginatedResponse } from "@/types/pagination";
 
-export async function getGroups() {
-  const response = await api.get("/groups");
+export async function getGroups(page = 1, pageSize = 5) {
+  const response = await api.get<PaginatedResponse<Group>>("/groups", {
+    params: { page, page_size: pageSize },
+  });
   return response.data;
 }
 

@@ -2,7 +2,8 @@ import random
 import string
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
+from sqlalchemy import func
 
 from app.models.group import Group
 from app.models.group_member import GroupMember
@@ -30,37 +31,44 @@ def create_group(
     )
 
     db.add(group)
-    db.commit()
-    db.refresh(group)
-
+    db.flush()
     member = GroupMember(
         group_id=group.id,
         user_id=current_user.id,
     )
-
     db.add(member)
     db.commit()
+    db.refresh(group)
 
     return group
 
 def get_groups(
     current_user: User,
     db: Session,
+    page: int = 1,
+    page_size: int = 5,
 ):
-
-    groups = (
-        db.query(Group)
-        .join(
-            GroupMember,
-            Group.id == GroupMember.group_id,
-        )
-        .filter(
-            GroupMember.user_id == current_user.id
-        )
-        .all()
+    base_query = (
+        select(Group)
+        .join(GroupMember, Group.id == GroupMember.group_id)
+        .where(GroupMember.user_id == current_user.id)
     )
+    total = db.exec(
+        select(func.count()).select_from(base_query.subquery())
+    ).one()
+    groups = db.exec(
+        base_query.order_by(Group.name, Group.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
 
-    return groups
+    return {
+        "items": groups,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": (total + page_size - 1) // page_size,
+    }
 
 def join_group(
     invite_code: str,
@@ -81,12 +89,7 @@ def join_group(
         )
 
     existing = (
-        db.query(GroupMember)
-        .filter(
-            GroupMember.group_id == group.id,
-            GroupMember.user_id == current_user.id,
-        )
-        .first()
+        db.exec(select(GroupMember).where(GroupMember.group_id == group.id, GroupMember.user_id == current_user.id)).first
     )
 
     if existing:
@@ -110,21 +113,12 @@ def join_group(
 def get_group_details(group_id, db: Session):
 
     group = (
-        db.query(Group)
-        .filter(Group.id == group_id)
-        .first()
+        db.exec(select(Group).where(Group.id == group_id)).first()
     )
 
     members = (
-        db.query(User)
-        .join(
-            GroupMember,
-            User.id == GroupMember.user_id,
-        )
-        .filter(
-            GroupMember.group_id == group_id
-        )
-        .all()
+        db.exec(select(User).join(GroupMember, User.id == GroupMember.user_id).where(GroupMember.group_id == group_id)).all()
+
     )
 
     return {
@@ -142,12 +136,7 @@ def leave_group(
 ):
 
     member = (
-        db.query(GroupMember)
-        .filter(
-            GroupMember.group_id == group_id,
-            GroupMember.user_id == current_user.id,
-        )
-        .first()
+        db.exec(GroupMember).where(GroupMember.group_id == group_id, GroupMember.user_id == current_user.id).first()
     )
 
     if member is None:
