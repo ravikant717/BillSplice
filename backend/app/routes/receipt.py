@@ -19,7 +19,8 @@ router = APIRouter(
     prefix="/receipts",
     tags=["Receipts"],
 )
-@router.post("/")
+@router.post("")
+@router.post("/", include_in_schema=False)
 async def scan_receipt(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),

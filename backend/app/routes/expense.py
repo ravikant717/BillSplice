@@ -18,8 +18,13 @@ router = APIRouter(
 
 
 @router.post(
+    "",
+    response_model=ExpenseResponse,
+)
+@router.post(
     "/",
     response_model=ExpenseResponse,
+    include_in_schema=False,
 )
 def add_expense(
     expense: ExpenseCreate,
